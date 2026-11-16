@@ -2,6 +2,7 @@ from flask import Flask
 from .extensions import db, migrate
 from .main import main as main_bp  # type: ignore
 from config import config_by_name  # type: ignore
+from . import models
 
 
 def create_app(config_name):
