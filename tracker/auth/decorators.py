@@ -36,7 +36,13 @@ def token_required(f):
 
             user_id = int(payload["sub"])
 
-        except (jwt.InvalidTokenError, TypeError, ValueError, KeyError):
+        except jwt.ExpiredSignatureError:
+            return jsonify({
+                "code": "token_expired",
+                "message": "Access token has expired."
+            }), 401
+
+        except jwt.InvalidTokenError:
             return jsonify({
                 "code": "authentication_error",
                 "message": "Invalid or expired token."
