@@ -11,6 +11,10 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-me")
     JWT_SECRET = os.getenv("JWT_SECRET", SECRET_KEY)
 
+    JWT_ACCESS_TOKEN_EXPIRES = int(
+        os.getenv("JWT_ACCESS_TOKEN_EXPIRES", "3600")
+    )
+
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "SQLALCHEMY_DATABASE_URI",
         "sqlite:///dev.db"
