@@ -108,3 +108,24 @@ def update_profile():
         }), 409
 
     return jsonify(serialize_profile(user)), 200
+
+@auth.route("/admin", methods=["GET"])
+@token_required
+def admin_only():
+    user = db.session.get(User, g.user_id)
+
+    if user is None:
+        return jsonify({
+            "code": "not_found",
+            "message": "User not found."
+        }), 404
+
+    if user.role != "admin":
+        return jsonify({
+            "code": "forbidden",
+            "message": "Admin access required."
+        }), 403
+
+    return jsonify({
+        "message": "Welcome, admin!"
+    }), 200
