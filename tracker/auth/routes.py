@@ -2,7 +2,7 @@ from flask import request, jsonify, g
 from sqlalchemy.exc import IntegrityError
 
 from tracker.extensions import db # type: ignore
-from tracker.models import User # type: ignore
+from tracker.models import User, Task # type: ignore
 from .decorators import token_required
 from . import auth
 
@@ -129,3 +129,104 @@ def admin_only():
     return jsonify({
         "message": "Welcome, admin!"
     }), 200
+
+@auth.route("/tasks", methods=["POST"])
+@token_required
+def create_task():
+    user = db.session.get(User, g.user_id)
+
+    if user is None:
+        return jsonify({
+            "code": "not_found",
+            "message": "User not found."
+        }), 404
+
+    if not request.is_json:
+        return jsonify({
+            "code": "validation_error",
+            "message": "Request must contain JSON."
+        }), 400
+
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({
+            "code": "validation_error",
+            "message": "Request body must be a JSON object."
+        }), 400
+
+    if not set(data.keys()).issubset({"title", "description"}):
+        return jsonify({
+            "code": "validation_error",
+            "message": "Only title and description are allowed."
+        }), 400
+
+    title = data.get("title")
+
+    if not isinstance(title, str) or not title.strip():
+        return jsonify({
+            "code": "validation_error",
+            "message": "A task title is required."
+        }), 400
+
+    title = title.strip()
+
+    if len(title) > 255:
+        return jsonify({
+            "code": "validation_error",
+            "message": "Title must be at most 255 characters."
+        }), 400
+
+    description = data.get("description")
+
+    if description is not None and not isinstance(description, str):
+        return jsonify({
+            "code": "validation_error",
+            "message": "Description must be a string or null."
+        }), 400
+
+    task = Task(
+        user_id=g.user_id,
+        title=title,
+        description=description
+    )
+
+    try:
+        db.session.add(task)
+        db.session.commit()
+
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify({
+        "id": task.id,
+        "user_id": task.user_id,
+        "title": task.title,
+        "description": task.description,
+        "completed": task.completed,
+        "created_at": task.created_at.isoformat()
+    }), 201
+
+
+@auth.route("/tasks", methods=["GET"])
+@token_required
+def get_tasks():
+    tasks = db.session.execute(
+        db.select(Task).where(
+            Task.user_id == g.user_id
+        )
+    ).scalars().all()
+
+    return jsonify([
+        {
+            "id": task.id,
+            "user_id": task.user_id,
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "created_at": task.created_at.isoformat()
+        }
+        for task in tasks
+    ]), 200
+
