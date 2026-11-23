@@ -230,3 +230,28 @@ def get_tasks():
         for task in tasks
     ]), 200
 
+@auth.route("/tasks/<int:task_id>", methods=["GET"])
+@token_required
+def get_task(task_id):
+    task = db.session.get(Task, task_id)
+
+    if task is None:
+        return jsonify({
+            "error": "not_found",
+            "message": "Task not found."
+        }), 404
+    
+    if task.user_id != g.user_id:
+        return jsonify({
+            "code": "forbidden",
+            "message": "You do not have permission to access this task."
+        }), 403
+    
+    return jsonify({
+        "id": task.id,
+        "user_id": task.user_id,
+        "title": task.title,
+        "description": task.description,
+        "completed": task.completed,
+        "created_at": task.created_at.isoformat()
+    }), 200
