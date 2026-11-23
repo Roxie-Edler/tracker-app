@@ -7,6 +7,8 @@ from .extensions import db
 class User(db.Model):
     __tablename__ = "users"
 
+    tasks = db.relationship("Task", back_populates="user")
+
     role = db.Column(
         db.String(20),
         nullable=False,
@@ -42,6 +44,8 @@ class User(db.Model):
     
 class Task(db.Model):
     __tablename__ = "tasks"
+
+    user = db.relationship("User", back_populates="tasks")
 
     id = db.Column(db.Integer, primary_key=True)
 
