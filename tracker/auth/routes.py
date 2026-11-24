@@ -255,3 +255,117 @@ def get_task(task_id):
         "completed": task.completed,
         "created_at": task.created_at.isoformat()
     }), 200
+
+@auth.route("/tasks/<int:task_id>", methods=["PATCH"])
+@token_required
+def update_task(task_id):
+    task = db.session.get(Task, task_id)
+
+    if task is None:
+        return jsonify({
+            "error": "not_found",
+            "message": "Task not found."
+        }), 404
+
+    if task.user_id != g.user_id:
+        return jsonify({
+            "code": "forbidden",
+            "message": "You do not have permission to update this task."
+        }), 403
+
+    if not request.is_json:
+        return jsonify({
+            "code": "validation_error",
+            "message": "Request must contain JSON."
+        }), 400
+
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({
+            "code": "validation_error",
+            "message": "Request body must be a JSON object."
+        }), 400
+
+    allowed_fields = {"title", "description", "completed"}
+
+    if not data or not set(data.keys()).issubset(allowed_fields):
+        return jsonify({
+            "code": "validation_error",
+            "message": "Provide at least one valid task field."
+        }), 400
+
+    if "title" in data:
+        title = data["title"]
+
+        if not isinstance(title, str) or not title.strip():
+            return jsonify({
+                "code": "validation_error",
+                "message": "Title must be a non-empty string."
+            }), 400
+
+        if len(title.strip()) > 255:
+            return jsonify({
+                "code": "validation_error",
+                "message": "Title must be at most 255 characters."
+            }), 400
+
+        task.title = title.strip()
+
+    if "description" in data:
+        description = data["description"]
+
+        if description is not None and not isinstance(description, str):
+            return jsonify({
+                "code": "validation_error",
+                "message": "Description must be a string or null."
+            }), 400
+
+        task.description = description
+
+    if "completed" in data:
+        completed = data["completed"]
+
+        if not isinstance(completed, bool):
+            return jsonify({
+                "code": "validation_error",
+                "message": "Completed must be a Boolean."
+            }), 400
+
+        task.completed = completed
+
+    db.session.commit()
+
+    return jsonify({
+        "id": task.id,
+        "user_id": task.user_id,
+        "title": task.title,
+        "description": task.description,
+        "completed": task.completed,
+        "created_at": task.created_at.isoformat()
+    }), 200
+
+@auth.route("/tasks/<int:task_id>", methods=["DELETE"])
+@token_required
+def delete_task(task_id):
+    task = db.session.get(Task, task_id)
+
+    if task is None:
+        return jsonify({
+            "error": "not_found",
+            "message": "Task not found."
+        }), 404
+
+    if task.user_id != g.user_id:
+        return jsonify({
+            "code": "forbidden",
+            "message": "You do not have permission to delete this task."
+        }), 403
+
+    db.session.delete(task)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Task deleted successfully.",
+        "id": task_id
+    }), 200
