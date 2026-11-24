@@ -237,7 +237,7 @@ def get_task(task_id):
 
     if task is None:
         return jsonify({
-            "error": "not_found",
+            "code": "not_found",
             "message": "Task not found."
         }), 404
     
@@ -263,7 +263,7 @@ def update_task(task_id):
 
     if task is None:
         return jsonify({
-            "error": "not_found",
+            "code": "not_found",
             "message": "Task not found."
         }), 404
 
@@ -352,7 +352,7 @@ def delete_task(task_id):
 
     if task is None:
         return jsonify({
-            "error": "not_found",
+            "code": "not_found",
             "message": "Task not found."
         }), 404
 
