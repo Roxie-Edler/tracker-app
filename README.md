@@ -89,3 +89,172 @@ flask db upgrade
 This updates the database schema to match your latest migration.
 
 Note: Migration commands should be run with the project's virtual environment activated. The migration initialization command only needs to be run once per project.
+
+
+Docker and PostgreSQL Setup
+Prerequisites
+Docker Desktop installed and running.
+Docker Compose available.
+Git installed.
+1. Configure environment variables
+
+Create your local environment file from the example:
+
+bash
+cp .env.example .env
+
+
+Edit .env and provide your own values for:
+
+SECRET_KEY
+JWT_SECRET
+POSTGRES_DB
+POSTGRES_USER
+POSTGRES_PASSWORD
+DATABASE_URL
+
+The database URL must use db as its hostname because db is the PostgreSQL service name in Docker Compose.
+
+Example format:
+
+text
+DATABASE_URL=postgresql+psycopg://tracker_user:YOUR_PASSWORD@db:5432/tracker_db
+
+
+Never commit .env or share its secrets.
+
+2. Build and start the application
+
+From the project root, run:
+
+bash
+docker compose up -d --build
+
+
+Check the services:
+
+bash
+docker compose ps
+
+
+PostgreSQL should report healthy, and the web application should be running.
+
+3. Apply database migrations
+
+Run Flask-Migrate inside the web container:
+
+bash
+docker compose exec web flask --app wsgi db upgrade
+
+
+This applies existing database migrations to PostgreSQL.
+
+4. Verify application health
+
+Check the health endpoint:
+
+bash
+curl -i http://localhost:5000/health
+
+
+Expected response:
+
+json
+{
+  "status": "healthy"
+}
+
+
+The HTTP status should be 200 OK.
+
+5. Verify authentication and task creation
+
+Register a test user or log in with an existing user:
+
+bash
+curl -i -X POST http://localhost:5000/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"YOUR_EMAIL","password":"YOUR_PASSWORD"}'
+
+
+Use the returned access token for authenticated requests.
+
+Create a task:
+
+bash
+curl -i -X POST http://localhost:5000/auth/tasks \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Docker Persistence Test","description":"Testing PostgreSQL persistence."}'
+
+
+Expected response: 201 CREATED.
+
+Retrieve the task using its returned ID:
+
+bash
+curl -i http://localhost:5000/auth/tasks/TASK_ID \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+
+Expected response: 200 OK.
+
+6. Verify PostgreSQL data persistence
+
+Stop the application:
+
+bash
+docker compose down
+
+
+Restart it:
+
+bash
+docker compose up -d
+
+
+Check that the services are running:
+
+bash
+docker compose ps
+
+
+Log in again to obtain a fresh access token, then retrieve the previously created task.
+
+The task should still exist with the same ID and data.
+
+Important: Do not use docker compose down -v when performing a normal restart. The -v option removes named volumes, including the PostgreSQL data volume.
+
+7. Verify Git ignores local secrets
+
+Check that .env is ignored:
+
+bash
+git check-ignore -v .env
+
+
+Check that .env.example is tracked:
+
+bash
+git ls-files --error-unmatch .env.example
+
+
+The first command should identify the .gitignore rule, and the second should return .env.example.
+
+Never commit actual credentials or database passwords.
+
+8. Stopping the application
+
+To stop the containers while preserving database data:
+
+bash
+docker compose down
+
+
+To start them again:
+
+bash
+docker compose up -d
+
+
+The named PostgreSQL volume preserves database data across these container restarts.
