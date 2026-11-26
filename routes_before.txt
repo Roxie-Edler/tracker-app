@@ -1,0 +1,17 @@
+DATABASE URI: sqlite:///tracker_dev.db
+Endpoint             Methods  Rule                     
+-------------------  -------  -------------------------
+auth.admin_only      GET      /auth/admin              
+auth.get_profile     GET      /auth/profile            
+auth.protected_test  GET      /auth/protected-test     
+auth.update_profile  PATCH    /auth/profile            
+main.health          GET      /health                  
+main.index           GET      /                        
+main.login           POST     /login                   
+main.register        POST     /register                
+static               GET      /static/<path:filename>  
+tasks.create_task    POST     /auth/tasks              
+tasks.delete_task    DELETE   /auth/tasks/<int:task_id>
+tasks.get_task       GET      /auth/tasks/<int:task_id>
+tasks.get_tasks      GET      /auth/tasks              
+tasks.update_task    PATCH    /auth/tasks/<int:task_id>
