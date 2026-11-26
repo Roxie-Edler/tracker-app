@@ -26,4 +26,4 @@ EXPOSE 5000
 ENV PORT=5000
 
 # Start Flask through Gunicorn, using the existing WSGI entry point
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} wsgi:app"]
+CMD ["sh", "-c", "flask --app wsgi db upgrade && exec gunicorn --bind 0.0.0.0:${PORT:-5000} wsgi:app"]
