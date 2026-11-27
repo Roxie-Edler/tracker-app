@@ -5,7 +5,7 @@ A Flask-based backend application for the Tracker App. This project uses Flask, 
 Setup
 1. Clone the repository
 bash
-git clone <repository-url>
+git clone -b feature/roles-admin-access https://github.com/Roxie-Edler/tracker-app.git tracker-app
 cd tracker-app
 
 2. Create a virtual environment
@@ -92,6 +92,12 @@ Note: Migration commands should be run with the project's virtual environment ac
 
 
 Docker and PostgreSQL Setup
+
+APP_PORT controls the local host port. It defaults to 5001.
+The Flask application continues listening on port 5000 inside the container.
+
+For example, to use port 5002, change APP_PORT=5002 in .env.
+
 Prerequisites
 Docker Desktop installed and running.
 Docker Compose available.
@@ -153,8 +159,11 @@ This applies existing database migrations to PostgreSQL.
 
 Check the health endpoint:
 
+The default host port is 5001. If you changed APP_PORT in your .env
+file, replace 5001 in the URL with your configured port.
+
 bash
-curl -i http://localhost:5000/health
+curl -i http://localhost:5001/health
 
 
 Expected response:
